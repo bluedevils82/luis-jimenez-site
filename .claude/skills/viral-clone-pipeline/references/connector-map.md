@@ -59,14 +59,30 @@ Stated plainly so they don't get discovered mid-run:
 
 1. **TikTok video download.** `video_analysis_create` accepts YouTube URLs or uploaded files only.
    `media_import_url` needs a direct HTTPS media URL under 50 MB, not a TikTok page URL. The user
-   must upload the file or supply a direct CDN link. A Zapier RapidAPI action could close this if
-   it's worth enabling.
-2. **Telegram trigger.** No Telegram connector. Chat, Routines, or an IFTTT webhook instead.
-3. **JSON2Video caption burn-in.** No dedicated caption-overlay service. Overlay text is either
+   must upload the file. A Zapier RapidAPI action could close this if it's worth enabling.
+2. **Any media fetch from Google Drive.** The session's egress policy blocks
+   `drive.usercontent.google.com` (proxy 403 on CONNECT). Sharing settings are irrelevant — the host
+   is unreachable, and policy denials must not be routed around. The Drive MCP connector still works
+   for metadata and for *writing* the Stage 3 archive; it just cannot feed bytes to Higgsfield.
+   Consequence: `media_upload_widget` is the only ingest path for non-YouTube sources.
+3. **Telegram trigger.** No Telegram connector. Chat, Routines, or an IFTTT webhook instead.
+4. **JSON2Video caption burn-in.** No dedicated caption-overlay service. Overlay text is either
    baked in at generation time by the UGC/faceless workflows, or applied by Shorts Studio restyling.
    Neither is a like-for-like replacement for arbitrary timed text over an existing render.
-4. **Blotato's one-call fan-out.** Buffer is per-channel, so Stage 4 is N calls, and partial failure
+5. **Blotato's one-call fan-out.** Buffer is per-channel, so Stage 4 is N calls, and partial failure
    is a normal outcome to be reported rather than an error to retry blindly.
+
+## Verified in the first test run (2026-08-01)
+
+Confirmed working, at zero credits: YouTube-URL analysis, widget upload + analysis of a local file.
+Analysis returns in 20–90s and includes `video_s3_url` for uploaded media.
+
+Confirmed broken: Google Drive media fetch (egress policy). Confirmed misleading: the scene `label`
+taxonomy on non-talking-head footage. Confirmed truncating: long-source analysis, which stopped at
+5:15 of a ~20-minute video.
+
+Untested: Stage 3 rendering (blocked on credits — 69 needed against a balance of 10) and all of
+Stage 4.
 
 ## Connector status at build time
 

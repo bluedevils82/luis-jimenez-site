@@ -34,18 +34,37 @@ TikTok downloader connector. Route by what the user gives you:
 |---|---|
 | YouTube URL | `video_analysis_create({youtube_url})` directly — no upload needed |
 | Direct `.mp4` URL (<50 MB) | `media_import_url({url, type:"video"})` → `video_analysis_create({video_input_id})` |
-| TikTok/Reels page URL | **Cannot fetch.** Ask the user to upload the file, or paste a direct CDN mp4 URL. Offer `media_upload_widget({type:"video"})` |
-| Local file | `media_upload` → `media_confirm` → `video_analysis_create` |
+| TikTok/Reels page URL | **Cannot fetch.** Offer `media_upload_widget({type:"video"})` |
+| Google Drive file | **Cannot fetch** — egress policy blocks Drive's content host, and sharing settings don't change that. Use the widget. |
+| Local file | `media_upload_widget({type:"video"})` — the browser uploads directly |
+
+**In practice the widget is the ingest path for everything that isn't a YouTube URL.** Do not try to
+curl media into the container: `drive.usercontent.google.com` returns a proxy 403, and policy denials
+must not be routed around. `download_file_content` is not an alternative either — it returns base64
+into the conversation, and a 40 MB video would exhaust the context window.
+
+Analysis is **free** and takes 20–90 seconds, not the 3–5 minutes the tool description suggests.
+Both a YouTube URL and an uploaded file were verified on a free plan with 10 credits.
 
 Then:
 
-1. `video_analysis_status` — poll until `completed`. Typically 3–5 min. Warn the user that longer
-   videos give less accurate scene analysis; under 60s is ideal.
-2. Run `virality_predictor({action:"create"})` on the source. Its hook-strength and retention-risk
-   read is the thing worth cloning — capture *why* it worked, not what it said.
-3. From the analysis, write a **structure brief**: hook (first 3s), beat sequence with timestamps,
-   pacing, on-screen text style, CTA, and the transcript.
-4. Log `stage=1` to the sheet with the source URL, run_id, and structure brief.
+1. `video_analysis_status` — poll until `completed`. Poll with a background timer; foreground `sleep`
+   is blocked, and Monitor cannot poll an MCP tool from bash.
+   **Long videos are truncated, not just degraded.** A 20-minute source returned scenes for only the
+   first 5:15. If the user linked a timestamp beyond that, the moment they cared about is not in the
+   analysis — say so rather than reasoning over data you don't have.
+   The completed response also carries `video_s3_url`, a direct CloudFront mp4 for uploaded media.
+2. **Ignore the scene `label` field on anything that isn't talking-head content.** The analyzer
+   force-fits a UGC taxonomy (`Opening Hook` / `Real Experience` / `Call to Action`) onto every
+   video; on music and performance footage nearly every scene comes back `Real Experience`. Build
+   the beat map from timestamps, `shot_type`, and `visual` instead.
+3. Run `virality_predictor({action:"create"})` on the source. Its hook-strength and retention-risk
+   read is the thing worth cloning — capture *why* it worked, not what it said. Cost unverified;
+   check the balance first if credits are tight.
+4. From the analysis, write a **structure brief**: hook (first 3s), beat sequence with timestamps,
+   pacing, on-screen text style, CTA, and the transcript. Note whether the source is a single static
+   take — a locked-off one-shot gives a restyle much less to work with than varied coverage.
+5. Log `stage=1` to the sheet with the source URL, run_id, and structure brief.
 
 Do not copy the source's script, voiceover, or on-screen text into the new video. You are cloning
 the *structure*; the words must be original. See "Originality gate" below.
@@ -69,8 +88,13 @@ produce it and let the user discover the problem after publishing.
 
 ## Stage 3 — Produce the video
 
-Gate: confirm the script and get approval to spend credits. State the estimated cost first
-(`shorts_studio_create({get_cost:true, duration_seconds})` gives a real number without submitting).
+Gate: confirm the script and get approval to spend credits. **Check `balance` before quoting
+anything** — this is the stage that stops runs dead, and it's better caught at Stage 1 than here.
+
+Shorts Studio is **3 credits/second, flat** (verified: 23s→69, 30s→90, 60s→180), with a 4s minimum,
+so the floor for any restyle is 12 credits. `shorts_studio_create({get_cost:true, duration_seconds})`
+confirms a number without submitting. Generation-model costs vary — price them the same way rather
+than assuming this rate applies.
 
 Pick the production route that matches the format:
 
