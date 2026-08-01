@@ -91,10 +91,33 @@ produce it and let the user discover the problem after publishing.
 Gate: confirm the script and get approval to spend credits. **Check `balance` before quoting
 anything** — this is the stage that stops runs dead, and it's better caught at Stage 1 than here.
 
+### Choose the engine first
+
+Three render engines are connected, and they are **not interchangeable**. Pick by capability, then
+by balance. See `references/engines.md` for the verified matrix.
+
+| Need | Engine | Notes |
+|---|---|---|
+| **Restyle existing footage** | Higgsfield Shorts Studio | **The only option in the stack.** 3 credits/sec flat, 4s minimum |
+| New video from a prompt | Runway `gen-4` → `gen-4-turbo` | Verified working on the free tier. Watermarked |
+| New video, cheapest | OpenArt | 50 credits minimum (PixVerse V6, 5s, 540p) |
+| Stills, thumbnails, covers | OpenArt or Runway | OpenArt from 10 credits (Kling 3 Omni) |
+
+**Do not promise a restyle from Runway or OpenArt.** Runway's video-to-video needs `seedance-2` or
+`kling-o3-pro`; a free workspace exposes only `gen-4-turbo`, which is image-to-video. Runway's other
+route, Aleph (`edit_video`), is 28 credits/sec — ~10x Shorts Studio. OpenArt has no video-to-video
+mode at all; its `element2video` takes a video as an *identity reference* for new footage, not a
+restyle. Confirm the workspace's real model list with `whoami` before quoting either.
+
 Shorts Studio is **3 credits/second, flat** (verified: 23s→69, 30s→90, 60s→180), with a 4s minimum,
 so the floor for any restyle is 12 credits. `shorts_studio_create({get_cost:true, duration_seconds})`
 confirms a number without submitting. Generation-model costs vary — price them the same way rather
 than assuming this rate applies.
+
+**The Runway text→image→video chain, verified end to end:** `generate_image({model:"gen-4"})` —
+*not* `gen-4-image-turbo`, which has no text-to-image mode and errors out — then
+`generate_video({model:"gen-4-turbo", startFrame:{url}, duration:5, ratio:"1080:1920"})`. Image
+lands in ~45s, video in ~2min.
 
 Pick the production route that matches the format:
 
@@ -112,7 +135,11 @@ Then:
 2. `virality_predictor` on the **finished** video. If hook strength lands below the source's, say so
    and offer one revision pass before publishing — that is the whole value of having the score.
 3. Optional cover: `get_workflow_instructions({workflow:"youtube-thumbnail-generator"})`.
-4. Archive the final file to Google Drive (`create_file`) so it outlives Higgsfield's storage.
+4. Archive: **not possible from this environment.** Rendered assets live on CloudFront
+   (`dnznrvs05pmza.cloudfront.net`, Higgsfield's CDN), and the egress policy blocks those hosts the
+   same way it blocks Drive — the bytes cannot reach the container, so they cannot be re-uploaded to
+   Drive. Hand the user the asset URL and note it is signed and will expire. Running Claude Code
+   locally removes this limitation.
 5. Log `stage=3` with the video URL, Drive link, character/voice IDs, and credits spent.
 
 ## Stage 4 — Publish and log
@@ -151,7 +178,9 @@ run's sheet row.
 
 ## References
 
+- `references/engines.md` — the verified capability and cost matrix for Higgsfield, Runway, and
+  OpenArt, plus the egress limits on moving assets between them.
 - `references/connector-map.md` — every n8n node in the original diagram, mapped to its replacement,
-  including the four that have no equivalent.
+  including the ones that have no equivalent.
 - `references/tracking-sheet.md` — the Google Sheets schema and the exact Zapier calls to write it.
 - `references/publishing.md` — per-platform caption rules and failure handling.
