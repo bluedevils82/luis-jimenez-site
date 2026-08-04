@@ -2,7 +2,7 @@
 
 status: manual deployment stage — pre-launch
 
-Freemium AI agent builder SaaS. Renamed from "The Agent Factory" (trademark conflict). **Never use the old name in any artifact.**
+Freemium AI agent builder SaaS. Renamed for trademark reasons — see the naming-continuity rule in `CLAUDE.md`. **Never restate the old name in any artifact.**
 
 ## Current state
 - React/Vite frontend + Express backend
