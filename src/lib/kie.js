@@ -425,7 +425,8 @@ export class KieClient {
         const bridge = cfPath();
         if (bridge) return bridge.uploadFile(file);
         const key = this.getKey();
-        const url = `${this.baseUrl}/api/v1/file-stream-upload`;
+        // Kie.ai serves file uploads from a separate host, not api.kie.ai.
+        const url = 'https://kieai.redpandaai.co/api/file-stream-upload';
 
         const formData = new FormData();
         formData.append('file', file);
