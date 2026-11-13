@@ -3,26 +3,50 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ImageStudio, VideoStudio, LipSyncStudio, CinemaStudio } from 'studio';
 import ApiKeyModal from './ApiKeyModal';
+import OutputsGallery from './OutputsGallery';
 
 const TABS = [
   { id: 'image',   label: 'Image Studio' },
   { id: 'video',   label: 'Video Studio' },
   { id: 'lipsync', label: 'Lip Sync' },
   { id: 'cinema',  label: 'Cinema Studio' },
+  { id: 'outputs', label: 'My Outputs' },
 ];
 
 const STORAGE_KEY = 'kie_key';
+const OUTPUTS_KEY = 'jfai_outputs';
+const MAX_OUTPUTS = 300;
+
+function loadOutputs() {
+  try {
+    const list = JSON.parse(localStorage.getItem(OUTPUTS_KEY) || '[]');
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveOutputs(list) {
+  try {
+    localStorage.setItem(OUTPUTS_KEY, JSON.stringify(list));
+  } catch {
+    // Storage full or blocked; the list still works for this visit.
+  }
+}
 
 export default function StandaloneShell() {
   const [apiKey, setApiKey] = useState(null);
   const [activeTab, setActiveTab] = useState('image');
   const [showSettings, setShowSettings] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
+  const [outputs, setOutputs] = useState([]);
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     setHasMounted(true);
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) setApiKey(stored);
+    setOutputs(loadOutputs());
     // Open the studio named in the link, e.g. /studio?tab=video (or /video).
     const tab = new URLSearchParams(window.location.search).get('tab');
     if (TABS.some((t) => t.id === tab)) setActiveTab(tab);
@@ -32,6 +56,39 @@ export default function StandaloneShell() {
   const selectTab = useCallback((id) => {
     setActiveTab(id);
     window.history.replaceState(null, '', `/studio?tab=${id}`);
+  }, []);
+
+  // Every studio reports finished results here; they are collected in My Outputs.
+  const addOutput = useCallback((result) => {
+    if (!result?.url) return;
+    const item = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      url: result.url,
+      type: result.type || 'image',
+      prompt: result.prompt || '',
+      model: result.model || '',
+      createdAt: new Date().toISOString(),
+    };
+    setOutputs((prev) => {
+      const next = [item, ...prev.filter((o) => o.url !== item.url)].slice(0, MAX_OUTPUTS);
+      saveOutputs(next);
+      return next;
+    });
+    setToast('Saved to My Outputs');
+    setTimeout(() => setToast(null), 2500);
+  }, []);
+
+  const deleteOutput = useCallback((id) => {
+    setOutputs((prev) => {
+      const next = prev.filter((o) => o.id !== id);
+      saveOutputs(next);
+      return next;
+    });
+  }, []);
+
+  const clearOutputs = useCallback(() => {
+    setOutputs([]);
+    saveOutputs([]);
   }, []);
 
   const handleKeySave = useCallback((key) => {
@@ -77,6 +134,13 @@ export default function StandaloneShell() {
               }`}
             >
               {tab.label}
+              {tab.id === 'outputs' && outputs.length > 0 && (
+                <span className={`ml-2 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                  activeTab === tab.id ? 'bg-black/20 text-black' : 'bg-[#d9ff00] text-black'
+                }`}>
+                  {outputs.length}
+                </span>
+              )}
             </button>
           ))}
         </nav>
@@ -91,12 +155,25 @@ export default function StandaloneShell() {
       </header>
 
       {/* Studio Content */}
-      <div className="flex-1">
-        {activeTab === 'image'   && <ImageStudio   apiKey={apiKey} />}
-        {activeTab === 'video'   && <VideoStudio   apiKey={apiKey} />}
-        {activeTab === 'lipsync' && <LipSyncStudio apiKey={apiKey} />}
-        {activeTab === 'cinema'  && <CinemaStudio  apiKey={apiKey} />}
+      <div className="flex-1 min-h-0">
+        {activeTab === 'image'   && <ImageStudio   apiKey={apiKey} onGenerationComplete={addOutput} />}
+        {activeTab === 'video'   && <VideoStudio   apiKey={apiKey} onGenerationComplete={addOutput} />}
+        {activeTab === 'lipsync' && <LipSyncStudio apiKey={apiKey} onGenerationComplete={addOutput} />}
+        {activeTab === 'cinema'  && <CinemaStudio  apiKey={apiKey} onGenerationComplete={addOutput} />}
+        {activeTab === 'outputs' && (
+          <OutputsGallery items={outputs} onDelete={deleteOutput} onClearAll={clearOutputs} onGoToStudio={selectTab} />
+        )}
       </div>
+
+      {/* "Saved" notice after each generation */}
+      {toast && (
+        <button
+          onClick={() => selectTab('outputs')}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-[#d9ff00] text-black text-sm font-bold shadow-lg"
+        >
+          ✓ {toast} · View
+        </button>
+      )}
 
       {/* Settings Modal */}
       {showSettings && (
