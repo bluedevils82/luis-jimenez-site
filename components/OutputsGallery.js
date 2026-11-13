@@ -8,6 +8,10 @@ const STUDIOS = {
   cinema:  { label: 'Cinema', video: false },
   video:   { label: 'Video',  video: true },
   lipsync: { label: 'Lip Sync', video: true },
+  effect:  { label: 'Effect', video: false },
+  'effect-video': { label: 'Effect', video: true },
+  tool:    { label: 'Tool', video: false },
+  'tool-video': { label: 'Tool', video: true },
 };
 
 const FILTERS = [

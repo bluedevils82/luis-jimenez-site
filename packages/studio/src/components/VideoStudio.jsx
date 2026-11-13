@@ -274,13 +274,14 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
         const model = modelList.find(m => m.id === modelId);
 
         const ars = isImageMode ? getAspectRatiosForI2VModel(modelId) : getAspectRatiosForVideoModel(modelId);
-        if (ars.length > 0) { setSelectedAr(ars[0]); setShowAr(true); } else { setShowAr(false); }
+        const pickDefault = (list, def) => (def !== undefined && list.some(v => String(v) === String(def)) ? def : list[0]);
+        if (ars.length > 0) { setSelectedAr(pickDefault(ars, model?.inputs?.aspect_ratio?.default)); setShowAr(true); } else { setShowAr(false); }
 
         const durations = isImageMode ? getDurationsForI2VModel(modelId) : getDurationsForModel(modelId);
-        if (durations.length > 0) { setSelectedDuration(durations[0]); setShowDuration(true); } else { setShowDuration(false); }
+        if (durations.length > 0) { setSelectedDuration(pickDefault(durations, model?.inputs?.duration?.default)); setShowDuration(true); } else { setShowDuration(false); }
 
         const resolutions = isImageMode ? getResolutionsForI2VModel(modelId) : getResolutionsForVideoModel(modelId);
-        if (resolutions.length > 0) { setSelectedResolution(resolutions[0]); setShowResolution(true); } else { setShowResolution(false); }
+        if (resolutions.length > 0) { setSelectedResolution(pickDefault(resolutions, model?.inputs?.resolution?.default)); setShowResolution(true); } else { setShowResolution(false); }
 
         const qualities = getQualitiesForModel(modelList, modelId);
         if (qualities.length > 0) {
