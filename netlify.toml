@@ -1,32 +1,20 @@
+# Deploys the self-contained Next.js studio (app/ + components/ + packages/studio).
+# Netlify detects Next.js and adds its runtime automatically.
+#
+# The netlify/ folder holds the original fork's hosted backend (logins, credits,
+# Airtable, etc.) used by the Vite/Electron build. It needs that author's
+# accounts and secrets, so it is NOT deployed here: the directories below point
+# away from it on purpose.
 [build]
-  base = "."
-  command = "npm install && npx vite build"
-  publish = "dist"
-  functions = "netlify/functions"
+  command = "npm run setup && npm run build"
+  publish = ".next"
+  functions = "netlify-functions-disabled"
+  edge_functions = "netlify-edge-functions-disabled"
 
 [build.environment]
   NODE_VERSION = "22"
-
-[functions]
-  included_files = ["data/models.json"]
-
-# Same-origin streaming route for media downloads.
-[[edge_functions]]
-  function = "media-download"
-  path = "/download-media"
 
 [[headers]]
   for = "/*"
   [headers.values]
     X-Frame-Options = "DENY"
-
-# Content-factory function API surface (must come before the SPA catch-all).
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
