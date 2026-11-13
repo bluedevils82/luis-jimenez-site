@@ -1,4 +1,6 @@
 const BASE_URL = 'https://api.kie.ai';
+// Kie.ai serves file uploads from a separate host, not api.kie.ai.
+const UPLOAD_URL = 'https://kieai.redpandaai.co/api/file-stream-upload';
 
 async function getHeaders(apiKey) {
     return {
@@ -255,7 +257,7 @@ export async function processLipSync(apiKey, params) {
 
 export function uploadFile(apiKey, file, onProgress) {
     return new Promise((resolve, reject) => {
-        const url = `${BASE_URL}/api/v1/file-stream-upload`;
+        const url = UPLOAD_URL;
         const formData = new FormData();
         formData.append('file', file);
         formData.append('uploadPath', 'open-higgsfield');
