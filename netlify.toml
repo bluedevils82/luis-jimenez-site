@@ -6,6 +6,7 @@
 # accounts and secrets, so it is NOT deployed here: the directories below point
 # away from it on purpose.
 [build]
+  base = "."
   command = "npm run setup && npm run build"
   publish = ".next"
   functions = "netlify-functions-disabled"

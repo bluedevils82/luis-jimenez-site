@@ -1,11 +1,8 @@
 {
   "name": "open-higgsfield-ai",
-  "description": "Open-source alternative to Higgsfield AI — AI image, video, cinema and lip sync studio",
+  "description": "Open-source alternative to Higgsfield AI \u2014 AI image, video, cinema and lip sync studio",
   "private": true,
   "version": "1.0.0",
-  "workspaces": [
-    "packages/studio"
-  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -22,7 +19,7 @@
   "build": {
     "appId": "ai.higgsfield.open",
     "productName": "Open Higgsfield AI",
-    "copyright": "Copyright © 2025",
+    "copyright": "Copyright \u00a9 2025",
     "directories": {
       "output": "release"
     },
@@ -64,7 +61,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hot-toast": "^2.4.1",
-    "studio": "*"
+    "studio": "file:./packages/studio"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
