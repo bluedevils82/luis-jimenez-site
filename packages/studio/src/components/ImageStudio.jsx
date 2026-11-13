@@ -829,7 +829,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
         <div className="absolute inset-0 flex flex-col items-center justify-center p-4 min-[800px]:p-16 z-10">
           {/* History sidebar */}
           {history.length > 0 && (
-            <div className="fixed right-0 top-0 h-full w-20 md:w-24 bg-black/60 backdrop-blur-xl border-l border-white/5 z-50 flex flex-col items-center py-4 gap-3 overflow-y-auto">
+            <div className="fixed right-0 top-14 bottom-0 w-20 md:w-24 bg-black/60 backdrop-blur-xl border-l border-white/5 z-50 flex flex-col items-center py-4 gap-3 overflow-y-auto">
               <div className="text-[9px] font-bold text-muted uppercase tracking-widest mb-2">
                 History
               </div>
