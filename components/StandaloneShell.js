@@ -4,12 +4,16 @@ import { useState, useEffect, useCallback } from 'react';
 import { ImageStudio, VideoStudio, LipSyncStudio, CinemaStudio } from 'studio';
 import ApiKeyModal from './ApiKeyModal';
 import OutputsGallery from './OutputsGallery';
+import EffectsStudio from './apps/EffectsStudio';
+import ToolsStudio from './apps/ToolsStudio';
 
 const TABS = [
   { id: 'image',   label: 'Image Studio' },
   { id: 'video',   label: 'Video Studio' },
   { id: 'lipsync', label: 'Lip Sync' },
   { id: 'cinema',  label: 'Cinema Studio' },
+  { id: 'effects', label: 'Effects' },
+  { id: 'tools',   label: 'Tools' },
   { id: 'outputs', label: 'My Outputs' },
 ];
 
@@ -122,12 +126,12 @@ export default function StandaloneShell() {
         </div>
 
         {/* Tabs */}
-        <nav className="flex items-center gap-1">
+        <nav className="flex items-center gap-1 overflow-x-auto">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => selectTab(tab.id)}
-              className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+              className={`px-3 xl:px-4 py-2 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap ${
                 activeTab === tab.id
                   ? 'bg-[#d9ff00] text-black'
                   : 'text-white/50 hover:text-white'
@@ -160,6 +164,8 @@ export default function StandaloneShell() {
         {activeTab === 'video'   && <VideoStudio   apiKey={apiKey} onGenerationComplete={addOutput} />}
         {activeTab === 'lipsync' && <LipSyncStudio apiKey={apiKey} onGenerationComplete={addOutput} />}
         {activeTab === 'cinema'  && <CinemaStudio  apiKey={apiKey} onGenerationComplete={addOutput} />}
+        {activeTab === 'effects' && <EffectsStudio apiKey={apiKey} onResult={addOutput} />}
+        {activeTab === 'tools'   && <ToolsStudio   apiKey={apiKey} onResult={addOutput} />}
         {activeTab === 'outputs' && (
           <OutputsGallery items={outputs} onDelete={deleteOutput} onClearAll={clearOutputs} onGoToStudio={selectTab} />
         )}

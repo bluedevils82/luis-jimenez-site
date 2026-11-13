@@ -674,7 +674,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
         setImageMode(true);
         setSelectedModelId(firstI2I.id);
         setSelectedModelName(firstI2I.name);
-        setSelectedAr(ars[0] || "1:1");
+        setSelectedAr((ars.includes("1:1") ? "1:1" : ars[0]) || "1:1");
         setSelectedQuality(resolutions[0] || null);
         setMaxImages(getMaxImagesForI2IModel(firstI2I.id));
       }
@@ -690,7 +690,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
     const resolutions = getResolutionsForModel(firstT2I.id);
     setSelectedModelId(firstT2I.id);
     setSelectedModelName(firstT2I.name);
-    setSelectedAr(ars[0] || "1:1");
+    setSelectedAr((ars.includes("1:1") ? "1:1" : ars[0]) || "1:1");
     setSelectedQuality(resolutions[0] || null);
     setMaxImages(1);
   }, []);
@@ -705,7 +705,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
       : getResolutionsForModel(m.id);
     setSelectedModelId(m.id);
     setSelectedModelName(m.name);
-    setSelectedAr(ars[0] || "1:1");
+    setSelectedAr((ars.includes("1:1") ? "1:1" : ars[0]) || "1:1");
     setSelectedQuality(resolutions[0] || null);
     if (imageMode) setMaxImages(getMaxImagesForI2IModel(m.id));
   };
@@ -735,7 +735,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
     const resolutions = getResolutionsForModel(firstT2I.id);
     setSelectedModelId(firstT2I.id);
     setSelectedModelName(firstT2I.name);
-    setSelectedAr(ars[0] || "1:1");
+    setSelectedAr((ars.includes("1:1") ? "1:1" : ars[0]) || "1:1");
     setSelectedQuality(resolutions[0] || null);
     setMaxImages(1);
   };

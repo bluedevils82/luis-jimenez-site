@@ -7,6 +7,17 @@ A self-hosted AI creative studio with four workspaces:
 - **Lip Sync**: drive a face with an audio track
 - **Cinema Studio**: cinematic shots with camera/lens presets
 
+Plus:
+
+- **Effects**: one-click photo looks (3D animated, anime, watercolor, action figure…) and
+  camera moves (orbit, dolly zoom, crash zoom, drone fly-away…), no prompt needed
+- **Tools**: upscale photos (up to 8×, Topaz, Crisp), remove backgrounds, upscale videos
+  (1080p/2K/4K, Topaz)
+- **My Outputs**: everything you create, in one gallery with download
+
+The model menus list only models Kie.ai serves (generated from its API specs; see
+`scripts/kie-catalog/`).
+
 It runs entirely in the browser and calls the [Kie.ai](https://kie.ai) API with
 your own key. The key is stored only in your browser (localStorage) and is sent
 straight to Kie.ai; this site has no backend of its own.
