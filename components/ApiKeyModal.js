@@ -23,7 +23,7 @@ export default function ApiKeyModal({ onSave }) {
             </svg>
           </div>
           <h1 className="text-2xl font-black text-white uppercase tracking-wider mb-2">
-            Open Higgsfield AI
+            Jimenez Family AI
           </h1>
           <p className="text-white/40 text-sm">
             Enter your <a href="https://kie.ai" target="_blank" rel="noreferrer" className="text-[#d9ff00] hover:underline">Kie.ai</a> API key to start generating
