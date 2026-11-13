@@ -1,4 +1,4 @@
-# luis-jimenez-site — AI Image & Video Studio
+# Jimenez Family AI — Image & Video Studio
 
 A self-hosted AI creative studio with four workspaces:
 

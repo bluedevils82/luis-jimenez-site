@@ -51,7 +51,7 @@ export default function StandaloneShell() {
       <header className="flex-shrink-0 flex items-center justify-between px-4 pt-4 pb-0 border-b border-white/5">
         <div className="flex items-center gap-3">
           <span className="text-white font-black text-lg tracking-wider uppercase">
-            Open Higgsfield AI
+            Jimenez Family AI
           </span>
         </div>
 
