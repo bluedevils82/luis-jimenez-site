@@ -23,6 +23,15 @@ export default function StandaloneShell() {
     setHasMounted(true);
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) setApiKey(stored);
+    // Open the studio named in the link, e.g. /studio?tab=video (or /video).
+    const tab = new URLSearchParams(window.location.search).get('tab');
+    if (TABS.some((t) => t.id === tab)) setActiveTab(tab);
+  }, []);
+
+  // Keep the address bar in sync so the current studio can be bookmarked.
+  const selectTab = useCallback((id) => {
+    setActiveTab(id);
+    window.history.replaceState(null, '', `/studio?tab=${id}`);
   }, []);
 
   const handleKeySave = useCallback((key) => {
@@ -60,7 +69,7 @@ export default function StandaloneShell() {
           {TABS.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => selectTab(tab.id)}
               className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
                 activeTab === tab.id
                   ? 'bg-[#d9ff00] text-black'
