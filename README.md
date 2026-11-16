@@ -17,6 +17,8 @@ Plus:
 - **Assistant**: a chat with Claude (through the same Kie.ai key) with a choice of model and
   character. It can make images, videos, songs and voice clips from the conversation, and
   asks before spending credits. Chats are saved only in your browser.
+  Add an Anthropic API key in Settings to send the chat straight to Anthropic instead of
+  through Kie.ai (media generation still uses Kie.ai).
 - **My Outputs**: everything you create, in one gallery with download
 
 The model menus list only models Kie.ai serves (generated from its API specs; see
