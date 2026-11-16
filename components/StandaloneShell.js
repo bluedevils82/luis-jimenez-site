@@ -45,6 +45,7 @@ export default function StandaloneShell() {
   const [hasMounted, setHasMounted] = useState(false);
   const [outputs, setOutputs] = useState([]);
   const [toast, setToast] = useState(null);
+  const [credits, setCredits] = useState(null);
 
   useEffect(() => {
     setHasMounted(true);
@@ -61,6 +62,22 @@ export default function StandaloneShell() {
     setActiveTab(id);
     window.history.replaceState(null, '', `/studio?tab=${id}`);
   }, []);
+
+  // Kie.ai credit balance, shown in the header. Hidden if it can't be read.
+  const refreshCredits = useCallback(async (key) => {
+    try {
+      const res = await fetch('https://api.kie.ai/api/v1/chat/credit', { headers: { Authorization: `Bearer ${key}` } });
+      const json = await res.json();
+      setCredits(json.code === 200 && typeof json.data === 'number' ? json.data : null);
+    } catch {
+      setCredits(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (apiKey) refreshCredits(apiKey);
+    else setCredits(null);
+  }, [apiKey, refreshCredits]);
 
   // Every studio reports finished results here; they are collected in My Outputs.
   const addOutput = useCallback((result) => {
@@ -80,7 +97,9 @@ export default function StandaloneShell() {
     });
     setToast('Saved to My Outputs');
     setTimeout(() => setToast(null), 2500);
-  }, []);
+    const key = localStorage.getItem(STORAGE_KEY);
+    if (key) refreshCredits(key);
+  }, [refreshCredits]);
 
   const deleteOutput = useCallback((id) => {
     setOutputs((prev) => {
@@ -150,12 +169,25 @@ export default function StandaloneShell() {
         </nav>
 
         {/* Settings */}
-        <button
-          onClick={() => setShowSettings(true)}
-          className="text-white/40 hover:text-white text-sm transition-colors"
-        >
-          ⚙ Settings
-        </button>
+        <div className="flex items-center gap-3 flex-shrink-0 pl-2">
+          {credits !== null && (
+            <a
+              href="https://kie.ai/billing"
+              target="_blank"
+              rel="noreferrer"
+              title="Your Kie.ai credit balance. Click to add credits."
+              className="px-2.5 py-1 rounded-full bg-white/5 text-xs text-white/70 hover:text-white whitespace-nowrap"
+            >
+              <span className="text-[#d9ff00]">●</span> {Math.round(credits).toLocaleString()} credits
+            </a>
+          )}
+          <button
+            onClick={() => setShowSettings(true)}
+            className="text-white/40 hover:text-white text-sm transition-colors whitespace-nowrap"
+          >
+            ⚙ Settings
+          </button>
+        </div>
       </header>
 
       {/* Studio Content */}

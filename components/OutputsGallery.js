@@ -12,19 +12,26 @@ const STUDIOS = {
   'effect-video': { label: 'Effect', video: true },
   tool:    { label: 'Tool', video: false },
   'tool-video': { label: 'Tool', video: true },
+  'tool-audio': { label: 'Audio', video: false, audio: true },
 };
 
 const FILTERS = [
   { id: 'all',    label: 'All' },
   { id: 'images', label: 'Images' },
   { id: 'videos', label: 'Videos' },
+  { id: 'audio',  label: 'Audio' },
 ];
+
+export const isAudioOutput = (item) =>
+  STUDIOS[item.type]?.audio ?? /\.(mp3|wav|m4a|ogg|aac)(\?|$)/i.test(item.url);
+
+const kindOf = (item) => (isAudioOutput(item) ? 'audio' : isVideoOutput(item) ? 'videos' : 'images');
 
 export const isVideoOutput = (item) =>
   STUDIOS[item.type]?.video ?? /\.(mp4|webm|mov)(\?|$)/i.test(item.url);
 
 export async function downloadOutput(item) {
-  const ext = isVideoOutput(item) ? 'mp4' : (item.url.match(/\.(png|jpe?g|webp|gif)(\?|$)/i)?.[1] || 'png');
+  const ext = isAudioOutput(item) ? (item.url.match(/\.(mp3|wav|m4a|ogg|aac)(\?|$)/i)?.[1] || 'mp3') : isVideoOutput(item) ? 'mp4' : (item.url.match(/\.(png|jpe?g|webp|gif)(\?|$)/i)?.[1] || 'png');
   const name = `jimenez-ai-${item.type || 'output'}-${item.id}.${ext}`;
   try {
     const res = await fetch(item.url);
@@ -61,6 +68,14 @@ function Media({ item, full = false }) {
     );
   }
   const cls = full ? 'max-w-full max-h-[70vh] rounded-xl' : 'w-full h-full object-cover';
+  if (isAudioOutput(item)) {
+    return (
+      <div className={`flex flex-col items-center justify-center gap-3 p-3 ${full ? 'w-full max-w-xl bg-[#111] rounded-xl py-10' : 'w-full h-full bg-gradient-to-br from-purple-600/30 to-amber-500/20'}`}>
+        <span className={full ? 'text-6xl' : 'text-4xl'}>🎵</span>
+        {full && <audio src={item.url} controls autoPlay className="w-full" onError={() => setBroken(true)} />}
+      </div>
+    );
+  }
   return isVideoOutput(item) ? (
     <video
       src={item.url}
@@ -121,7 +136,7 @@ export default function OutputsGallery({ items, onDelete, onClearAll, onGoToStud
   const [viewing, setViewing] = useState(null);
 
   const shown = useMemo(
-    () => items.filter((it) => filter === 'all' || (filter === 'videos') === isVideoOutput(it)),
+    () => items.filter((it) => filter === 'all' || kindOf(it) === filter),
     [items, filter]
   );
 
@@ -175,7 +190,7 @@ export default function OutputsGallery({ items, onDelete, onClearAll, onGoToStud
                 <button onClick={() => setViewing(item)} className="relative block w-full aspect-square bg-black" title="Open">
                   <Media item={item} />
                   <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-black/70 text-[10px] font-bold uppercase tracking-wider text-[#d9ff00]">
-                    {STUDIOS[item.type]?.label || 'Output'}{isVideoOutput(item) ? ' ▶' : ''}
+                    {STUDIOS[item.type]?.label || 'Output'}{isVideoOutput(item) || isAudioOutput(item) ? ' ▶' : ''}
                   </span>
                 </button>
                 <div className="p-3 flex items-start gap-2">
