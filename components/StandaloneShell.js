@@ -6,6 +6,7 @@ import ApiKeyModal from './ApiKeyModal';
 import OutputsGallery from './OutputsGallery';
 import EffectsStudio from './apps/EffectsStudio';
 import ToolsStudio from './apps/ToolsStudio';
+import AssistantStudio from './apps/AssistantStudio';
 
 const TABS = [
   { id: 'image',   label: 'Image Studio' },
@@ -14,6 +15,7 @@ const TABS = [
   { id: 'cinema',  label: 'Cinema Studio' },
   { id: 'effects', label: 'Effects' },
   { id: 'tools',   label: 'Tools' },
+  { id: 'assistant', label: 'Assistant' },
   { id: 'outputs', label: 'My Outputs' },
 ];
 
@@ -191,13 +193,14 @@ export default function StandaloneShell() {
       </header>
 
       {/* Studio Content */}
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 relative">
         {activeTab === 'image'   && <ImageStudio   apiKey={apiKey} onGenerationComplete={addOutput} />}
         {activeTab === 'video'   && <VideoStudio   apiKey={apiKey} onGenerationComplete={addOutput} />}
         {activeTab === 'lipsync' && <LipSyncStudio apiKey={apiKey} onGenerationComplete={addOutput} />}
         {activeTab === 'cinema'  && <CinemaStudio  apiKey={apiKey} onGenerationComplete={addOutput} />}
         {activeTab === 'effects' && <EffectsStudio apiKey={apiKey} onResult={addOutput} />}
         {activeTab === 'tools'   && <ToolsStudio   apiKey={apiKey} onResult={addOutput} />}
+        {activeTab === 'assistant' && <AssistantStudio apiKey={apiKey} onResult={addOutput} />}
         {activeTab === 'outputs' && (
           <OutputsGallery items={outputs} onDelete={deleteOutput} onClearAll={clearOutputs} onGoToStudio={selectTab} />
         )}
@@ -207,7 +210,7 @@ export default function StandaloneShell() {
       {toast && (
         <button
           onClick={() => selectTab('outputs')}
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-[#d9ff00] text-black text-sm font-bold shadow-lg"
+          className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-[#d9ff00] text-black text-sm font-bold shadow-lg"
         >
           ✓ {toast} · View
         </button>

@@ -14,6 +14,9 @@ Plus:
 - **Tools**: photo (upscale up to 8×, Topaz, Crisp, remove background, same person in a
   new scene), video (motion control, character swap, edit with words, photo-to-photo
   transition, upscale to 4K) and audio (Suno songs, ElevenLabs text to speech, voice clean-up)
+- **Assistant**: a chat with Claude (through the same Kie.ai key) with a choice of model and
+  character. It can make images, videos, songs and voice clips from the conversation, and
+  asks before spending credits. Chats are saved only in your browser.
 - **My Outputs**: everything you create, in one gallery with download
 
 The model menus list only models Kie.ai serves (generated from its API specs; see
