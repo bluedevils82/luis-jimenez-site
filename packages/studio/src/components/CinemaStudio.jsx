@@ -317,6 +317,10 @@ function ScrollColumn({ title, items, columnKey, value, onChange }) {
                                         <img
                                             src={imageUrl}
                                             alt={String(item)}
+                                            width={56}
+                                            height={56}
+                                            loading="lazy"
+                                            decoding="async"
                                             className="w-full h-full object-cover opacity-80"
                                         />
                                     ) : columnKey === 'focal' ? (
