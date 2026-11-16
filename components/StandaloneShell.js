@@ -20,6 +20,7 @@ const TABS = [
 ];
 
 const STORAGE_KEY = 'kie_key';
+const ANTHROPIC_KEY = 'anthropic_key';
 const OUTPUTS_KEY = 'jfai_outputs';
 const MAX_OUTPUTS = 300;
 
@@ -44,6 +45,8 @@ export default function StandaloneShell() {
   const [apiKey, setApiKey] = useState(null);
   const [activeTab, setActiveTab] = useState('image');
   const [showSettings, setShowSettings] = useState(false);
+  const [anthropicKey, setAnthropicKey] = useState('');
+  const [anthropicDraft, setAnthropicDraft] = useState('');
   const [hasMounted, setHasMounted] = useState(false);
   const [outputs, setOutputs] = useState([]);
   const [toast, setToast] = useState(null);
@@ -54,6 +57,7 @@ export default function StandaloneShell() {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) setApiKey(stored);
     setOutputs(loadOutputs());
+    setAnthropicKey(localStorage.getItem(ANTHROPIC_KEY) || '');
     // Open the studio named in the link, e.g. /studio?tab=video (or /video).
     const tab = new URLSearchParams(window.location.search).get('tab');
     if (TABS.some((t) => t.id === tab)) setActiveTab(tab);
@@ -119,6 +123,15 @@ export default function StandaloneShell() {
   const handleKeySave = useCallback((key) => {
     localStorage.setItem(STORAGE_KEY, key);
     setApiKey(key);
+  }, []);
+
+  // Optional: an Anthropic key makes the Assistant's chat go straight to Anthropic.
+  const saveAnthropicKey = useCallback((key) => {
+    const clean = key.trim();
+    if (clean) localStorage.setItem(ANTHROPIC_KEY, clean);
+    else localStorage.removeItem(ANTHROPIC_KEY);
+    setAnthropicKey(clean);
+    setAnthropicDraft('');
   }, []);
 
   const handleKeyChange = useCallback(() => {
@@ -200,7 +213,7 @@ export default function StandaloneShell() {
         {activeTab === 'cinema'  && <CinemaStudio  apiKey={apiKey} onGenerationComplete={addOutput} />}
         {activeTab === 'effects' && <EffectsStudio apiKey={apiKey} onResult={addOutput} />}
         {activeTab === 'tools'   && <ToolsStudio   apiKey={apiKey} onResult={addOutput} />}
-        {activeTab === 'assistant' && <AssistantStudio apiKey={apiKey} onResult={addOutput} />}
+        {activeTab === 'assistant' && <AssistantStudio apiKey={apiKey} anthropicKey={anthropicKey} onOpenSettings={() => setShowSettings(true)} onResult={addOutput} />}
         {activeTab === 'outputs' && (
           <OutputsGallery items={outputs} onDelete={deleteOutput} onClearAll={clearOutputs} onGoToStudio={selectTab} />
         )}
@@ -222,14 +235,51 @@ export default function StandaloneShell() {
           <div className="bg-[#111] border border-white/10 rounded-2xl p-8 w-full max-w-md">
             <h2 className="text-white font-bold text-xl mb-6">Settings</h2>
             <p className="text-white/50 text-sm mb-4">
-              Current API key: <span className="text-white/80 font-mono">{apiKey.slice(0, 8)}••••••••</span>
+              Kie.ai API key: <span className="text-white/80 font-mono">{apiKey.slice(0, 8)}••••••••</span>
             </p>
+
+            <div className="border-t border-white/10 pt-4 mb-6">
+              <h3 className="text-white font-semibold text-sm">Anthropic API key (optional)</h3>
+              <p className="text-white/40 text-xs mt-1 mb-3">
+                With this, the Assistant&apos;s chat goes straight to Anthropic and is billed there, not through Kie.ai.
+                Images, videos, songs and voices still use Kie.ai. Get a key at{' '}
+                <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer" className="text-[#d9ff00] hover:underline">console.anthropic.com</a>.
+                It is stored only in this browser.
+              </p>
+              {anthropicKey ? (
+                <div className="flex items-center gap-3">
+                  <span className="flex-1 text-white/80 font-mono text-sm">{anthropicKey.slice(0, 10)}••••••••</span>
+                  <button onClick={() => saveAnthropicKey('')} className="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm">
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="password"
+                    value={anthropicDraft}
+                    onChange={(e) => setAnthropicDraft(e.target.value)}
+                    placeholder="sk-ant-…"
+                    autoComplete="off"
+                    className="flex-1 min-w-0 rounded-lg bg-black border border-white/10 px-3 py-1.5 text-white text-sm placeholder:text-white/25 focus:outline-none focus:border-[#d9ff00]/60"
+                  />
+                  <button
+                    onClick={() => saveAnthropicKey(anthropicDraft)}
+                    disabled={!anthropicDraft.trim()}
+                    className="px-3 py-1.5 rounded-lg bg-[#d9ff00] text-black text-sm font-bold disabled:opacity-30"
+                  >
+                    Save
+                  </button>
+                </div>
+              )}
+            </div>
+
             <div className="flex gap-3">
               <button
                 onClick={handleKeyChange}
                 className="flex-1 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-colors"
               >
-                Change API Key
+                Change Kie.ai Key
               </button>
               <button
                 onClick={() => setShowSettings(false)}

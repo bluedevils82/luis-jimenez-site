@@ -9,7 +9,8 @@ import VOICES from './voices.json';
 // credits are spent. Chats are stored only in this browser.
 
 const CHATS_KEY = 'jfai_chats';
-const API_URL = 'https://api.kie.ai/claude/v1/messages';
+const KIE_URL = 'https://api.kie.ai/claude/v1/messages';
+const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
 
 const MODELS = [
   { id: 'claude-sonnet-5-5', label: 'Claude Sonnet 5.5', note: 'Balanced' },
@@ -81,26 +82,39 @@ function loadChats() {
 
 const blocksOf = (m) => (typeof m.content === 'string' ? [{ type: 'text', text: m.content }] : m.content || []);
 
-async function askClaude(apiKey, model, persona, messages) {
-  // Kie.ai's Claude endpoint documents no separate system field, so the instructions lead the first turn.
-  const wire = messages.map((m, i) => {
-    if (i !== 0) return { role: m.role, content: m.content };
-    const first = blocksOf(m);
-    return { role: 'user', content: [{ type: 'text', text: `<instructions>\n${systemText(persona)}\n</instructions>` }, ...first] };
-  });
-  const res = await fetch(API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      model, messages: wire, stream: false, max_tokens: 2048,
-      tools: AGENT_TOOLS.map(({ name, description, input_schema }) => ({ name, description, input_schema })),
-    }),
-  });
+// Chat goes straight to Anthropic when the user saved an Anthropic key, otherwise through Kie.ai.
+async function askClaude({ apiKey, anthropicKey }, model, persona, messages) {
+  const tools = AGENT_TOOLS.map(({ name, description, input_schema }) => ({ name, description, input_schema }));
+  let res;
+  if (anthropicKey) {
+    res = await fetch(ANTHROPIC_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': anthropicKey,
+        'anthropic-version': '2023-06-01',
+        // The key belongs to the person using this browser, so calling from the page is intended.
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({ model, max_tokens: 2048, system: systemText(persona), messages: messages.map((m) => ({ role: m.role, content: m.content })), tools }),
+    });
+  } else {
+    // Kie.ai's Claude endpoint documents no separate system field, so the instructions lead the first turn.
+    const wire = messages.map((m, i) => {
+      if (i !== 0) return { role: m.role, content: m.content };
+      return { role: 'user', content: [{ type: 'text', text: `<instructions>\n${systemText(persona)}\n</instructions>` }, ...blocksOf(m)] };
+    });
+    res = await fetch(KIE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({ model, messages: wire, stream: false, max_tokens: 2048, tools }),
+    });
+  }
   let json = null;
   try { json = await res.json(); } catch { /* handled below */ }
   if (!json || !Array.isArray(json.content)) {
-    const msg = json?.msg || json?.error?.message || json?.message || `Request failed (${res.status})`;
-    throw new Error(msg);
+    const msg = json?.error?.message || json?.msg || json?.message || `Request failed (${res.status})`;
+    throw new Error(`${anthropicKey ? 'Anthropic' : 'Kie.ai'}: ${msg}`);
   }
   return json.content.filter((b) => b.type === 'text' || b.type === 'tool_use');
 }
@@ -139,7 +153,7 @@ function ToolCard({ block, run, onApprove, onSkip }) {
   );
 }
 
-export default function AssistantStudio({ apiKey, onResult }) {
+export default function AssistantStudio({ apiKey, anthropicKey, onOpenSettings, onResult }) {
   const [chats, setChats] = useState([]);
   const [chatId, setChatId] = useState(null);
   const [model, setModel] = useState(MODELS[0].id);
@@ -179,14 +193,14 @@ export default function AssistantStudio({ apiKey, onResult }) {
     setThinking(true);
     setError(null);
     try {
-      const content = await askClaude(apiKey, model, PERSONAS.find((p) => p.id === c.persona) || PERSONAS[0], c.messages);
+      const content = await askClaude({ apiKey, anthropicKey }, model, PERSONAS.find((p) => p.id === c.persona) || PERSONAS[0], c.messages);
       patchChat(id, (cur) => ({ ...cur, messages: [...cur.messages, { role: 'assistant', content }] }));
     } catch (e) {
       setError(e.message || 'Something went wrong');
     } finally {
       setThinking(false);
     }
-  }, [apiKey, model, patchChat]);
+  }, [apiKey, anthropicKey, model, patchChat]);
 
   const send = () => {
     const text = draft.trim();
@@ -279,6 +293,13 @@ export default function AssistantStudio({ apiKey, onResult }) {
           <select value={persona.id} onChange={(e) => patchChat(chat.id, (c) => ({ ...c, persona: e.target.value }))} title="Character" className="rounded-lg bg-[#161616] border border-white/10 px-2 py-1.5 text-white text-sm">
             {PERSONAS.map((p) => <option key={p.id} value={p.id}>{p.icon} {p.name}</option>)}
           </select>
+          <button
+            onClick={onOpenSettings}
+            title={anthropicKey ? 'Chat is billed by Anthropic. Click to change.' : 'Chat is billed through Kie.ai. Click to use your own Anthropic key.'}
+            className="ml-auto px-2.5 py-1 rounded-full bg-white/5 text-xs text-white/60 hover:text-white whitespace-nowrap"
+          >
+            <span className={anthropicKey ? 'text-[#d9ff00]' : 'text-white/40'}>●</span> Chat via {anthropicKey ? 'Anthropic' : 'Kie.ai'}
+          </button>
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar">
