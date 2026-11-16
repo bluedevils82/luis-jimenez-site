@@ -42,9 +42,11 @@ export function useRun(apiKey, onResult) {
     try {
       const res = await runKieModel(apiKey, slug, input);
       if (!res?.url) throw new Error('Kie.ai did not return a file.');
-      const result = { url: res.url, type, prompt: label, model: slug };
-      setState({ running: false, error: null, result, startedAt: 0 });
-      onResult?.(result);
+      const urls = res.urls?.length ? res.urls : [res.url];
+      const results = urls.map((url) => ({ url, type, prompt: label, model: slug }));
+      setState({ running: false, error: null, result: { ...results[0], urls }, startedAt: 0 });
+      // Some tools return several files (Suno makes two songs); save them all, first one on top.
+      [...results].reverse().forEach((r) => onResult?.(r));
     } catch (e) {
       setState({ running: false, error: e.message || 'Something went wrong', result: null, startedAt: 0 });
     }
@@ -54,7 +56,7 @@ export function useRun(apiKey, onResult) {
   return { ...state, elapsed, run, reset: () => setState({ running: false, error: null, result: null, startedAt: 0 }) };
 }
 
-export function FilePicker({ accept, upload, label, hint, isVideo }) {
+export function FilePicker({ accept, upload, label, hint, isVideo, isAudio }) {
   const inputRef = useRef(null);
   const [over, setOver] = useState(false);
 
@@ -70,7 +72,9 @@ export function FilePicker({ accept, upload, label, hint, isVideo }) {
       <input ref={inputRef} type="file" accept={accept} className="hidden" onChange={(e) => { upload.pick(e.target.files?.[0]); e.target.value = ''; }} />
       {upload.preview ? (
         <div className="relative aspect-video bg-black flex items-center justify-center">
-          {isVideo ? (
+          {isAudio ? (
+            <audio src={upload.preview} controls className="w-full px-4" />
+          ) : isVideo ? (
             <video src={upload.preview} className="max-h-full max-w-full" muted controls playsInline />
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
@@ -87,7 +91,7 @@ export function FilePicker({ accept, upload, label, hint, isVideo }) {
         </div>
       ) : (
         <button onClick={() => inputRef.current?.click()} className="w-full aspect-video flex flex-col items-center justify-center gap-2 text-center p-6">
-          <span className="text-3xl">{isVideo ? '🎬' : '🖼️'}</span>
+          <span className="text-3xl">{isAudio ? '🎵' : isVideo ? '🎬' : '🖼️'}</span>
           <span className="text-white font-semibold">{label}</span>
           <span className="text-white/40 text-xs">{hint}</span>
         </button>
@@ -109,13 +113,13 @@ export function RunStatus({ runner, waitingText }) {
     return <div className="rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-300 break-words">⚠ {runner.error}</div>;
   }
   if (!runner.result) return null;
-  const isVideo = runner.result.type.endsWith('video');
+  const kind = runner.result.type.endsWith('video') ? 'video' : runner.result.type.endsWith('audio') ? 'audio' : 'image';
   return (
     <div className="rounded-2xl border border-white/10 bg-[#111] overflow-hidden">
-      <div className="bg-black flex items-center justify-center max-h-[60vh]">
-        {isVideo ? (
-          <video src={runner.result.url} className="max-h-[60vh] max-w-full" controls autoPlay loop playsInline />
-        ) : (
+      <div className="bg-black flex flex-col items-center justify-center gap-3 max-h-[60vh]">
+        {kind === 'video' && <video src={runner.result.url} className="max-h-[60vh] max-w-full" controls autoPlay loop playsInline />}
+        {kind === 'audio' && runner.result.urls.map((u) => <audio key={u} src={u} controls className="w-full px-4 first:mt-4 last:mb-4" />)}
+        {kind === 'image' && (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={runner.result.url} alt="Result" className="max-h-[60vh] max-w-full object-contain" />
         )}

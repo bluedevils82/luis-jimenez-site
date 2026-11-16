@@ -41,10 +41,19 @@ async function pollJobs(taskId, apiKey, maxAttempts = 900, interval = 2000) {
     throw new Error('Generation timed out after polling.');
 }
 
-function extractResultUrl(data) {
-    if (Array.isArray(data.resultUrls) && data.resultUrls.length) return data.resultUrls[0];
-    if (data.response?.resultUrls?.length) return data.response.resultUrls[0];
-    return null;
+// Kie.ai returns results as `response` (parsed) and `resultJson` (a JSON string).
+// Media models give { resultUrls: [...] }; Suno music gives { data: [{ audio_url }] }.
+function extractResultUrls(data) {
+    let parsed = data.response;
+    if (!parsed && typeof data.resultJson === 'string' && data.resultJson) {
+        try { parsed = JSON.parse(data.resultJson); } catch { parsed = null; }
+    }
+    const urls = [];
+    for (const src of [data, parsed || {}]) {
+        if (Array.isArray(src.resultUrls)) urls.push(...src.resultUrls);
+        if (Array.isArray(src.data)) urls.push(...src.data.map(t => t && t.audio_url));
+    }
+    return [...new Set(urls.filter(u => typeof u === 'string' && u))];
 }
 
 async function submitTask(apiKey, slug, input, onRequestId, maxAttempts = 60) {
@@ -65,8 +74,8 @@ async function submitTask(apiKey, slug, input, onRequestId, maxAttempts = 60) {
     if (!taskId) return json;
     if (onRequestId) onRequestId(taskId);
     const result = await pollJobs(taskId, apiKey, maxAttempts);
-    const outputUrl = extractResultUrl(result) || result.url;
-    return { ...result, url: outputUrl };
+    const urls = extractResultUrls(result);
+    return { ...result, url: urls[0] || result.url, urls };
 }
 
 // ── Request building ─────────────────────────────────────────────────────────

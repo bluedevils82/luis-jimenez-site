@@ -11,8 +11,9 @@ Plus:
 
 - **Effects**: one-click photo looks (3D animated, anime, watercolor, action figure…) and
   camera moves (orbit, dolly zoom, crash zoom, drone fly-away…), no prompt needed
-- **Tools**: upscale photos (up to 8×, Topaz, Crisp), remove backgrounds, upscale videos
-  (1080p/2K/4K, Topaz)
+- **Tools**: photo (upscale up to 8×, Topaz, Crisp, remove background, same person in a
+  new scene), video (motion control, character swap, edit with words, photo-to-photo
+  transition, upscale to 4K) and audio (Suno songs, ElevenLabs text to speech, voice clean-up)
 - **My Outputs**: everything you create, in one gallery with download
 
 The model menus list only models Kie.ai serves (generated from its API specs; see
